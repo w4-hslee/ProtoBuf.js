@@ -876,7 +876,16 @@
             token = this.tn.peek();
             if (token === Lang.STRINGOPEN || token === Lang.STRINGOPEN_SQ)
                 value = this._parseString();
-            else {
+            else if (token === Lang.OPEN) {
+              // Quick fix to workaround: https://github.com/dcodeIO/ProtoBuf.js/issues/95
+              // Skip through until we find the closing brace.
+              var tokens = [];
+              do {
+                token = this.tn.next();
+                tokens.push(token);
+              } while (token !== Lang.CLOSE);
+              value = tokens.join(' ');
+            } else {
                 this.tn.next();
                 if (Lang.NUMBER.test(token))
                     value = this._parseNumber(token, true);

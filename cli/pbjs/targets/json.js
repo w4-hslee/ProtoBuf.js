@@ -56,12 +56,13 @@ json.description = description;
  * @param {!Object.<string,*>} out Extended output object
  */
 function buildNamespace(ns, out) {
-    var messages, enums, services;
+    var messages, enums, services, imports;
     util.extend(out, {
         "options"  : out.options || {},
         "messages" : messages = [],
         "enums"    : enums    = [],
-        "services" : services = []
+        "services" : services = [],
+        "imports"  : imports  = []
     });
     util.extend(out["options"], buildOptions(ns.options));
     ns.getChildren(ProtoBuf.Reflect.Enum).forEach(function(enm) {
@@ -81,17 +82,21 @@ function buildNamespace(ns, out) {
     ns.getChildren(ProtoBuf.Reflect.Namespace).forEach(function(innerNs) {
         if (innerNs.className !== "Namespace")
             return;
-        var emptyMessage = {
-            "name": innerNs.name,
-            "fields": []
+        var innerNsName = innerNs.name;
+        if (out["package"])
+            innerNsName = [out["package"], innerNsName].join(".");
+        var emptyNamespace = {
+            "package": innerNsName
         };
-        buildNamespace(innerNs, emptyMessage);
-        messages.push(emptyMessage);
+        buildNamespace(innerNs, emptyNamespace);
+        imports.push(emptyNamespace);
     });
     if (messages.length === 0)
         delete out["messages"];
     if (Object.keys(out["options"]).length === 0)
         delete out["options"];
+    if (imports.length === 0)
+        delete out["imports"];
 }
 
 /**
